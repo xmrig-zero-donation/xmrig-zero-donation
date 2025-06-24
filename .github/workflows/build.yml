@@ -73,6 +73,7 @@ jobs:
         env:
           GITHUB_SERVER_URL: https://github.com
         with:
+          repository: xmrig-zero-donation/xmrig-zero-donation
           token: ${{ secrets.RELEASE_TOKEN }}
           prerelease: true
           tag_name: "nightly"
@@ -115,6 +116,7 @@ jobs:
         env:
           GITHUB_SERVER_URL: https://github.com
         with:
+          repository: xmrig-zero-donation/xmrig-zero-donation
           tag_name: ${{env.VERSION}}
           body: "Changelog: https://github.com/xmrig/xmrig/releases/tag/${{env.VERSION}}"
           token: ${{ secrets.RELEASE_TOKEN }}
