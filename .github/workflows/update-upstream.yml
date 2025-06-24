@@ -12,14 +12,41 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
-          submodules: recursive
           token: ${{ secrets.PAT }}
-      - name: Update module
+      
+      - name: Get latest xmrig version
+        id: get_version
         run: |
-          git submodule update --init --recursive --checkout -f --remote
+          # Get the latest release version from GitHub API
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/xmrig/xmrig/releases/latest | jq -r '.tag_name')
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest xmrig version: $LATEST_VERSION"
+      
+      - name: Check current version
+        id: check_version
+        run: |
+          if [ -f VERSION ]; then
+            CURRENT_VERSION=$(cat VERSION)
+            echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "Current version: $CURRENT_VERSION"
+          else
+            echo "current_version=" >> $GITHUB_OUTPUT
+            echo "No VERSION file found"
+          fi
+      
+      - name: Update VERSION file
+        if: steps.get_version.outputs.latest_version != steps.check_version.outputs.current_version
+        run: |
+          echo "${{ steps.get_version.outputs.latest_version }}" > VERSION
+          echo "Updated VERSION file to ${{ steps.get_version.outputs.latest_version }}"
+      
+      - name: Commit and push changes
+        if: steps.get_version.outputs.latest_version != steps.check_version.outputs.current_version
+        run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -am "[Automated action] Update xmrig" || true
+          git add VERSION
+          git commit -m "[Automated action] Update xmrig to ${{ steps.get_version.outputs.latest_version }}"
           git push

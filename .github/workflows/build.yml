@@ -8,64 +8,41 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'xmrig'
+      - 'VERSION'
       - 'patches/**'
   
 jobs:
   build-static:
-    runs-on: ubuntu-22.04
+    runs-on: alt-sisyphus
+    container:
+      image: altlinux.space/actions/runner/containers:sisyphus
+    
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
-        submodules: recursive
-    - uses: https://github.com/jirutka/setup-alpine@v1
-      with:
-        branch: v3.15
-        packages: >
-           git 
-           make 
-           cmake 
-           libstdc++ 
-           gcc 
-           g++ 
-           automake 
-           libtool 
-           autoconf 
-           linux-headers
+        submodules: true
 
-    - name: Apply patches
-      working-directory: xmrig
+    - name: Get version from VERSION file
+      id: get_version
       run: |
-        git apply --unidiff-zero < ../patches/*.patch
+        XMRIG_VERSION=$(cat VERSION)
+        echo "xmrig_version=$XMRIG_VERSION" >> $GITHUB_OUTPUT
+        echo "Building with xmrig version: $XMRIG_VERSION"
 
     - name: Build
-      working-directory: xmrig
       run: |
-        mkdir build
-        cd scripts && ./build_deps.sh && cd ../build
-        cmake .. -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON
-        make -j$(nproc)
-      shell: alpine.sh {0}
-    
-    - name: Verify
-      working-directory: xmrig
-      run: |
-        chmod +x build/xmrig && build/xmrig --version
+        podman build -t xmrig-static .
+        podman image save xmrig-static:latest - | crane export - - | tar -xf -
     
     - name: Archive production artifacts
       uses: actions/upload-artifact@v3
       with:
         name: build-static
         path: |
-          xmrig/build/xmrig
-
-    - name: Check xmrig tag
-      id: xmrig_tag_result
-      working-directory: xmrig
-      run: echo "XMRIG_TAG=$(git tag --points-at HEAD)" >> $GITHUB_OUTPUT
+          ./xmrig
 
     outputs:
-      xmrig_tag: ${{ steps.xmrig_tag_result.outputs.xmrig_tag }}
+      xmrig_tag: ${{ steps.get_version.outputs.xmrig_version }}
       
   release-nightly:
      runs-on: ubuntu-latest
