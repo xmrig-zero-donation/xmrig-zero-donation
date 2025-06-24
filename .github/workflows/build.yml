@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
-    - uses: jirutka/setup-alpine@v1
+    - uses: https://github.com/jirutka/setup-alpine@v1
       with:
         branch: v3.15
         packages: >
@@ -83,7 +83,7 @@ jobs:
            cp -r /tmp/artifact/* /tmp/xmrig-nightly
            
       - name: "Tar (Nightly)"
-        uses: a7ul/tar-action@v1.1.0
+        uses: https://github.com/a7ul/tar-action@v1.1.0
         with:
           command: c
           cwd: /tmp
@@ -92,8 +92,11 @@ jobs:
           outPath: xmrig-nightly-linux-static-x64.tar.gz
           
       - name: Release (Nightly)
-        uses: softprops/action-gh-release@v1
+        uses: https://github.com/softprops/action-gh-release@v2
+        env:
+          GITHUB_SERVER_URL: https://github.com
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           prerelease: true
           tag_name: "nightly"
           files: |
@@ -122,7 +125,7 @@ jobs:
            cp -r /tmp/artifact/* /tmp/xmrig-${{env.VER}}
            
       - name: "Tar"
-        uses: a7ul/tar-action@v1.1.0
+        uses: https://github.com/a7ul/tar-action@v1.1.0
         with:
           command: c
           cwd: /tmp
@@ -131,9 +134,12 @@ jobs:
           outPath: xmrig-${{env.VER}}-linux-static-x64.tar.gz
           
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: https://github.com/softprops/action-gh-release@v2
+        env:
+          GITHUB_SERVER_URL: https://github.com
         with:
           tag_name: ${{env.VERSION}}
           body: "Changelog: https://github.com/xmrig/xmrig/releases/tag/${{env.VERSION}}"
+          token: ${{ secrets.RELEASE_TOKEN }}
           files: |
             ./xmrig-${{env.VER}}-linux-static-x64.tar.gz
