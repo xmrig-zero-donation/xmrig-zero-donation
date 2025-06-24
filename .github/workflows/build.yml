@@ -31,7 +31,7 @@ jobs:
 
     - name: Build
       run: |
-        podman build -t xmrig-static .
+        podman build --build-arg XMRIG_VERSION=$XMRIG_VERSION -t xmrig-static .
         podman image save xmrig-static:latest - | crane export - - | tar -xf -
     
     - name: Archive production artifacts
