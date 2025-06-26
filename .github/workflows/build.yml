@@ -76,15 +76,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
-          gh release create nightly \
+          gh release upload nightly \
+            ./xmrig-nightly-linux-static-x64.tar.gz \
             --repo xmrig-zero-donation/xmrig-zero-donation \
-            --title "Nightly Build (${{ needs.build-static.outputs.xmrig_tag }})" \
-            --notes "Automated nightly build" \
-            --prerelease \
-            ./xmrig-nightly-linux-static-x64.tar.gz
+            --clobber
 
   release:
-     runs-on: ubuntu-latest
+     runs-on: alt-latest
      needs: build-static
      if: startsWith(needs.build-static.outputs.xmrig_tag, 'v')
      steps:
