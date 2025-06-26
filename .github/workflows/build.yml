@@ -45,9 +45,13 @@ jobs:
       xmrig_tag: ${{ steps.get_version.outputs.xmrig_version }}
       
   release-nightly:
-     runs-on: ubuntu-latest
+     runs-on: alt-latest
      needs: build-static
      steps:
+      - name: Install github-cli
+        run: |
+          apt-get update && apt-get install -y github-cli
+
       - name: Download Artifact
         uses: actions/download-artifact@v3
         with:
@@ -69,15 +73,14 @@ jobs:
           outPath: xmrig-nightly-linux-static-x64.tar.gz
           
       - name: Release (Nightly)
-        uses: https://github.com/softprops/action-gh-release@v2
         env:
-          GITHUB_SERVER_URL: https://github.com
-        with:
-          repository: xmrig-zero-donation/xmrig-zero-donation
-          token: ${{ secrets.RELEASE_TOKEN }}
-          prerelease: true
-          tag_name: "nightly"
-          files: |
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          gh release create nightly \
+            --repo xmrig-zero-donation/xmrig-zero-donation \
+            --title "Nightly Build (${{ needs.build-static.outputs.xmrig_tag }})" \
+            --notes "Automated nightly build" \
+            --prerelease \
             ./xmrig-nightly-linux-static-x64.tar.gz
 
   release:
@@ -85,6 +88,10 @@ jobs:
      needs: build-static
      if: startsWith(needs.build-static.outputs.xmrig_tag, 'v')
      steps:
+      - name: Install github-cli
+        run: |
+          apt-get update && apt-get install -y github-cli
+
       - name: "Set version env"
         run: |
           VERSION=${{ needs.build-static.outputs.xmrig_tag }}
@@ -112,13 +119,11 @@ jobs:
           outPath: xmrig-${{env.VER}}-linux-static-x64.tar.gz
           
       - name: Release
-        uses: https://github.com/softprops/action-gh-release@v2
         env:
-          GITHUB_SERVER_URL: https://github.com
-        with:
-          repository: xmrig-zero-donation/xmrig-zero-donation
-          tag_name: ${{env.VERSION}}
-          body: "Changelog: https://github.com/xmrig/xmrig/releases/tag/${{env.VERSION}}"
-          token: ${{ secrets.RELEASE_TOKEN }}
-          files: |
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          gh release create ${{env.VERSION}} \
+            --repo xmrig-zero-donation/xmrig-zero-donation \
+            --title "v${{env.VER}}" \
+            --notes "Changelog: https://github.com/xmrig/xmrig/releases/tag/${{env.VERSION}}" \
             ./xmrig-${{env.VER}}-linux-static-x64.tar.gz
